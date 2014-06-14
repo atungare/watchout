@@ -11,7 +11,6 @@ var numEnem = 30;
 var currScore = 0;
 var numColl = 0;
 var highScore = 0;
-var collision = false;
 
 // timer for score
 var begin;
@@ -40,18 +39,14 @@ var randPos = function() {
   for(var i = 0; i <= numEnem; i++) {
     var x = width * Math.random();
     var y = height * Math.random();
-    store.push([x, y]);
+    var coll = false;
+    store.push([x, y, coll]);
   }
   return store;
 };
 
 // Update the enemies' positions
 var updateEnemies = function(posArr) {
-
-  if(collision) {
-    numColl++;
-    collision = false;
-  }
 
   // Data Join
   var enemies = svg.selectAll(".enemies").data(posArr);
@@ -60,7 +55,8 @@ var updateEnemies = function(posArr) {
   enemies.enter().append("circle")
     .attr("class", "enemies")
     .attr("r", 10)
-    .attr("fill", "black");
+    .attr("fill", "black")
+    .property("coll", "false");
 
   // Update
   enemies.transition().duration(1500)
@@ -75,6 +71,14 @@ var updateEnemies = function(posArr) {
         checkScore(d3.select(this));
       };
     });
+
+  enemies.each(function(){
+    var me = d3.select(this);
+    if(me.property("coll") === "true") {
+      numColl++;
+      me.property("coll", "false");
+    }
+  });
 };
 
 var checkScore = function(enem) {
@@ -94,14 +98,12 @@ var checkScore = function(enem) {
   }
 
   if(foundColl) {
-
     begin = new Date();
-    collision = true;
+    enem.property("coll", "true");
 
     svg.style("background-color", "red").transition()
       .style("background-color", "white").transition();
   }
-
   // Display current score
   currScore = Math.floor((new Date() - begin)/100);
   if(currScore > highScore) {
