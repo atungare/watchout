@@ -11,6 +11,7 @@ var numEnem = 30;
 var currScore = 0;
 var numColl = 0;
 var highScore = 0;
+var collision = false;
 
 // timer for score
 var begin;
@@ -47,6 +48,11 @@ var randPos = function() {
 // Update the enemies' positions
 var updateEnemies = function(posArr) {
 
+  if(collision) {
+    numColl++;
+    collision = false;
+  }
+
   // Data Join
   var enemies = svg.selectAll(".enemies").data(posArr);
 
@@ -63,47 +69,44 @@ var updateEnemies = function(posArr) {
     })
     .attr("cy", function(d){
       return d[1];
+    })
+    .tween("score", function(){
+      return function(t) {
+        checkScore(d3.select(this));
+      };
     });
 };
 
+var checkScore = function(enem) {
 
-var detectCollision = function () {
-
-  var enemies = svg.selectAll(".enemies")
-  var radDist = parseInt(player.attr('r')) + parseInt(enemies.attr("r"));
+  var radDist = parseInt(player.attr('r')) + parseInt(enem.attr("r"));
   var myX = player.attr('cx');
   var myY = player.attr('cy');
   var foundColl = false;
 
-  enemies.each(function(d) {
-    var dist = Math.sqrt(
-      Math.pow((myX - d[0]), 2) +
-      Math.pow((myY - d[1]), 2)
-    );
-    if(dist < radDist){
-      foundColl = true;
-    }
-  });
+  var dist = Math.sqrt(
+    Math.pow((myX - parseInt(enem.attr("cx"))), 2) +
+    Math.pow((myY - parseInt(enem.attr("cy"))), 2)
+  );
 
-  return foundColl;
+  if(dist < radDist){
+    foundColl = true;
+  }
 
-};
+  if(foundColl) {
 
-var checkScore = function() {
-
-  if(detectCollision()) {
-    if(currScore > highScore) {
-      highScore = currScore;
-    }
     begin = new Date();
-    numColl++;
+    collision = true;
 
-    svg.style("background-color", "red").transition().duration(1000)
+    svg.style("background-color", "red").transition()
       .style("background-color", "white").transition();
   }
 
   // Display current score
   currScore = Math.floor((new Date() - begin)/100);
+  if(currScore > highScore) {
+    highScore = currScore;
+  }
   d3.select("body").select(".current").select("span")
     .text(currScore);
 
@@ -125,7 +128,3 @@ updateEnemies(randPos());
 setInterval(function() {
   updateEnemies(randPos());
 }, 1500);
-
-setInterval(function(){
-  checkScore();
-}, 500);
