@@ -7,7 +7,7 @@ var svg = d3.select("body").append("svg")
 var width = parseInt(d3.select("svg").style("width"));
 var height = parseInt(d3.select("svg").style("height"));
 
-var numEnem = 60;
+var numEnem = 30;
 var currScore = 0;
 var numColl = 0;
 var highScore = 0;
@@ -44,22 +44,6 @@ var randPos = function() {
   return store;
 };
 
-var detectCollision = function (posArr, radDist) {
-  var myX = player.attr('cx');
-  var myY = player.attr('cy');
-
-  for(var i = 0; i < posArr.length; i++) {
-    var dist = Math.sqrt(
-      Math.pow((myX - posArr[i][0]), 2) +
-      Math.pow((myY - posArr[i][1]), 2)
-    );
-    if(dist < radDist){
-      return true;
-    }
-  }
-  return false;
-};
-
 // Update the enemies' positions
 var updateEnemies = function(posArr) {
 
@@ -80,19 +64,46 @@ var updateEnemies = function(posArr) {
     .attr("cy", function(d){
       return d[1];
     });
+};
 
-  // Determine collision
+
+var detectCollision = function () {
+
+  var enemies = svg.selectAll(".enemies")
   var radDist = parseInt(player.attr('r')) + parseInt(enemies.attr("r"));
-  if(detectCollision(posArr, radDist)) {
+  var myX = player.attr('cx');
+  var myY = player.attr('cy');
+  var foundColl = false;
+
+  enemies.each(function(d) {
+    var dist = Math.sqrt(
+      Math.pow((myX - d[0]), 2) +
+      Math.pow((myY - d[1]), 2)
+    );
+    if(dist < radDist){
+      foundColl = true;
+    }
+  });
+
+  return foundColl;
+
+};
+
+var checkScore = function() {
+
+  if(detectCollision()) {
     if(currScore > highScore) {
       highScore = currScore;
     }
     begin = new Date();
     numColl++;
+
+    svg.style("background-color", "red").transition().duration(1000)
+      .style("background-color", "white").transition();
   }
 
   // Display current score
-  currScore = new Date() - begin;
+  currScore = Math.floor((new Date() - begin)/100);
   d3.select("body").select(".current").select("span")
     .text(currScore);
 
@@ -103,9 +114,7 @@ var updateEnemies = function(posArr) {
   // Display High Score
   d3.select("body").select(".high").select("span")
     .text(highScore);
-
 };
-
 
 player.call(drag);
 
@@ -114,6 +123,9 @@ begin = new Date();
 updateEnemies(randPos());
 
 setInterval(function() {
-  var tupArr = randPos();
-  updateEnemies(tupArr);
+  updateEnemies(randPos());
 }, 1500);
+
+setInterval(function(){
+  checkScore();
+}, 500);
