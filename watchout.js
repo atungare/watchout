@@ -7,7 +7,7 @@ var svg = d3.select("body").append("svg")
 var width = parseInt(d3.select("svg").style("width"));
 var height = parseInt(d3.select("svg").style("height"));
 
-var numEnem = 30;
+var genEnem = 5;
 var currScore = 0;
 var numColl = 0;
 var highScore = 0;
@@ -34,7 +34,7 @@ var drag = d3.behavior.drag()
   });
 
 // Generate random positions for enemies
-var randPos = function() {
+var randPos = function(numEnem) {
   var store = [];
   for(var i = 0; i <= numEnem; i++) {
     var x = width * Math.random();
@@ -56,10 +56,12 @@ var updateEnemies = function(posArr) {
     .attr("class", "enemies")
     .attr("r", 10)
     .attr("fill", "black")
-    .property("coll", "false");
+    .property("coll", "false")
+    .style("opacity", "0");
 
   // Update
   enemies.transition().duration(1500)
+    .style("opacity", "1")
     .attr("cx", function(d) {
       return d[0];
     })
@@ -76,7 +78,10 @@ var updateEnemies = function(posArr) {
     var me = d3.select(this);
     if(me.property("coll") === "true") {
       numColl++;
-      me.property("coll", "false");
+      me.property("coll", 'false');
+      me.style("fill",function() {
+        return "hsl(" + Math.random() * 360 + ",70%,50%)";
+      });
     }
   });
 };
@@ -101,7 +106,10 @@ var checkScore = function(enem) {
     begin = new Date();
     enem.property("coll", "true");
 
-    svg.style("background-color", "red").transition()
+    svg.style("background-color", function() {
+        return "hsl(" + Math.random() * 360 + ",70%,50%)";
+      })
+      .transition()
       .style("background-color", "white").transition();
   }
   // Display current score
@@ -125,8 +133,13 @@ player.call(drag);
 
 // Generate enemies and update each second
 begin = new Date();
-updateEnemies(randPos());
+updateEnemies(randPos(genEnem));
 
 setInterval(function() {
-  updateEnemies(randPos());
+  updateEnemies(randPos(genEnem));
 }, 1500);
+
+setInterval(function() {
+  genEnem++;
+}, 5000);
+
